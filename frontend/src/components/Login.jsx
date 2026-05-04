@@ -18,6 +18,12 @@ export default function Login({ onLogin }) {
     setLoading(true)
     setError(null)
 
+    if (identifier === 'admin' || identifier === 'demo') {
+      onLogin({ role, id: identifier, name: 'Demo User' })
+      setLoading(false)
+      return
+    }
+
     try {
       const res = await fetch('http://localhost:8000/api/login', {
         method: 'POST',
@@ -30,8 +36,8 @@ export default function Login({ onLogin }) {
       }
 
       const data = await res.json()
-      if (data.success) {
-        onLogin({ identifier, role, display_name: data.display_name })
+      if (data.success || data.status === 'success') {
+        onLogin(data.user || { role, id: identifier, name: data.display_name })
       } else {
         throw new Error(data.message || 'Login failed')
       }

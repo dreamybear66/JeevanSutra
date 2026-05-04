@@ -51,3 +51,9 @@ async def get_dashboard(patient_id: str):
         "latest_vwrs": vwrs.data[0] if vwrs.data else None,
         "latest_scores": scores.data[0] if scores.data else None,
     }
+
+@router.get("/security-audit")
+async def get_security_audit(limit: int = 100):
+    sb = get_supabase_client()
+    result = sb.table("security_audit_logs").select("*").order("occurred_at", desc=True).limit(limit).execute()
+    return {"events": result.data}
