@@ -1,0 +1,38 @@
+amr_version: "icmr-who-2024"
+
+organisms:
+  MRSA:
+    keywords: ["mrsa", "methicillin-resistant", "methicillin resistant staph"]
+    resistant_to: ["methicillin", "oxacillin", "amoxicillin", "ampicillin"]
+    recommended: ["vancomycin", "linezolid", "daptomycin"]
+    severity: "critical"
+
+  ESBL:
+    keywords: ["esbl", "extended-spectrum beta-lactamase", "extended spectrum"]
+    resistant_to: ["cephalosporins", "penicillins", "aztreonam"]
+    recommended: ["meropenem", "imipenem", "ertapenem"]
+    severity: "critical"
+
+  CRE:
+    keywords: ["cre", "carbapenem-resistant", "carbapenem resistant"]
+    resistant_to: ["meropenem", "imipenem", "ertapenem", "doripenem"]
+    recommended: ["colistin", "polymyxin B", "ceftazidime-avibactam"]
+    severity: "critical"
+
+  VRE:
+    keywords: ["vre", "vancomycin-resistant enterococ"]
+    resistant_to: ["vancomycin", "teicoplanin"]
+    recommended: ["linezolid", "daptomycin"]
+    severity: "high"
+
+  PRSP:
+    keywords: ["prsp", "penicillin-resistant streptococcus"]
+    resistant_to: ["penicillin", "amoxicillin"]
+    recommended: ["vancomycin", "linezolid", "ceftriaxone"]
+    severity: "high"
+
+  acinetobacter_mdr:
+    keywords: ["acinetobacter", "mdr acinetobacter", "multi-drug resistant acinetobacter"]
+    resistant_to: ["carbapenems", "cephalosporins", "fluoroquinolones"]
+    recommended: ["colistin", "polymyxin B", "tigecycline"]
+    severity: "critical"

@@ -1,0 +1,47 @@
+# ============================================================
+# Sanjeevani v2 — Backend Dependencies
+# ============================================================
+
+# ── Core Framework ──
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+python-multipart==0.0.9
+pydantic==2.9.0
+pydantic-settings==2.5.0
+
+# ── Database (Supabase) ──
+supabase==2.11.0
+# postgrest pulled automatically by supabase
+
+# ── LLM (Google Gemini) ──
+google-generativeai==0.8.3
+
+# ── RAG / Vector DB ──
+chromadb==0.5.23
+sentence-transformers==3.3.0
+
+# ── Clinical Config ──
+pyyaml==6.0.2
+
+# ── Math / Data ──
+numpy==1.26.4
+
+# ── PDF Export ──
+fpdf2==2.8.1
+
+# ── PDF Parsing (file uploads) ──
+pdfplumber==0.11.4
+
+# ── OCR Pipeline (scanned PDFs) ──
+PyMuPDF==1.24.0
+pytesseract==0.3.13
+Pillow==10.4.0
+
+# ── Environment ──
+python-dotenv==1.0.1
+
+# ── Security ──
+passlib==1.7.4
+
+# ── CORS ──
+# (included in fastapi)

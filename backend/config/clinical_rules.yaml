@@ -1,0 +1,93 @@
+rule_version: "sanjeevani-v2.0-sepsis3-2016"
+last_updated: "2026-05-04"
+
+# ── SOFA Scoring ──
+sofa:
+  respiratory:  # PaO2/FiO2
+    - { min: 400, max: 999999, score: 0 }
+    - { min: 300, max: 400,  score: 1 }
+    - { min: 200, max: 300,  score: 2 }
+    - { min: 100, max: 200,  score: 3 }
+    - { min: 0,   max: 100,  score: 4 }
+  coagulation:  # Platelets (K/uL)
+    - { min: 150, max: 999999, score: 0 }
+    - { min: 100, max: 150,  score: 1 }
+    - { min: 50,  max: 100,  score: 2 }
+    - { min: 20,  max: 50,   score: 3 }
+    - { min: 0,   max: 20,   score: 4 }
+  liver:  # Bilirubin (mg/dL)
+    - { min: 0,   max: 1.2,  score: 0 }
+    - { min: 1.2, max: 2.0,  score: 1 }
+    - { min: 2.0, max: 6.0,  score: 2 }
+    - { min: 6.0, max: 12.0, score: 3 }
+    - { min: 12.0, max: 999999, score: 4 }
+  cardiovascular:  # MAP (mmHg) + vasopressor support
+    - { map_min: 70, vasopressors: false, score: 0 }
+    - { map_min: 0,  vasopressors: false, score: 1 }
+    - { vasopressor: "dopamine", dose_max: 5, score: 2 }
+    - { vasopressor: "dopamine", dose_max: 15, score: 3 }
+    - { vasopressor: "dopamine", dose_min: 15, score: 4 }
+  cns:  # GCS
+    - { min: 15, max: 15,  score: 0 }
+    - { min: 13, max: 14,  score: 1 }
+    - { min: 10, max: 12,  score: 2 }
+    - { min: 6,  max: 9,   score: 3 }
+    - { min: 0,  max: 5,   score: 4 }
+  renal:  # Creatinine (mg/dL)
+    - { min: 0,   max: 1.2, score: 0 }
+    - { min: 1.2, max: 2.0, score: 1 }
+    - { min: 2.0, max: 3.5, score: 2 }
+    - { min: 3.5, max: 5.0, score: 3 }
+    - { min: 5.0, max: 999999, score: 4 }
+
+# ── qSOFA ──
+qsofa:
+  respiratory_rate_threshold: 22
+  systolic_bp_threshold: 100
+  gcs_threshold: 15
+
+# ── SIRS ──
+sirs:
+  temp_high: 38.3
+  temp_low: 36.0
+  heart_rate: 90
+  respiratory_rate: 20
+  paco2: 32
+  wbc_high: 12.0
+  wbc_low: 4.0
+  bands_pct: 10
+
+# ── AKI (KDIGO) ──
+aki:
+  creatinine_rise_48h: 0.3        # mg/dL rise in 48 hours
+  creatinine_factor_7d: 1.5       # 1.5x baseline in 7 days
+  stage_2_factor: 2.0             # 2x baseline
+  stage_3_factor: 3.0             # 3x baseline
+  stage_3_absolute: 4.0           # or >= 4.0 mg/dL
+
+# ── Outlier Detection ──
+outlier:
+  z_score_threshold: 3.0
+  min_history_points: 3
+  physiological_bounds:
+    potassium:    { min: 1.5,  max: 10.0,  unit: "mmol/L" }
+    sodium:       { min: 100,  max: 170,   unit: "mmol/L" }
+    pH:           { min: 6.5,  max: 8.0,   unit: "" }
+    heart_rate:   { min: 15,   max: 300,   unit: "bpm" }
+    temperature:  { min: 25,   max: 45,    unit: "°C" }
+    hemoglobin:   { min: 1,    max: 25,    unit: "g/dL" }
+    glucose:      { min: 10,   max: 1500,  unit: "mg/dL" }
+    lactate:      { min: 0,    max: 30,    unit: "mmol/L" }
+    creatinine:   { min: 0.1,  max: 30,    unit: "mg/dL" }
+    platelets:    { min: 1,    max: 2000,  unit: "K/uL" }
+    wbc:          { min: 0.1,  max: 200,   unit: "K/uL" }
+    bilirubin:    { min: 0,    max: 60,    unit: "mg/dL" }
+
+# ── VWRS (Ventilator Weaning) ──
+vwrs:
+  rsbi_threshold: 105
+  spo2_fio2_threshold: 150
+  peep_threshold: 8
+  gcs_threshold: 8
+  map_threshold: 65
+  borderline_tolerance: 0.15
