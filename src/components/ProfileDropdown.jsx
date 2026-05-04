@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { LogOut, User, Shield, ChevronDown } from 'lucide-react'
 
-export default function ProfileDropdown({ user, onLogout }) {
+export default function ProfileDropdown({ user, onLogout, onProfileClick }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -35,7 +35,7 @@ export default function ProfileDropdown({ user, onLogout }) {
             <span className={`profile-role-badge ${roleBadgeClass}`}>{user.role.toUpperCase()}</span>
           </div>
           <div className="profile-divider" />
-          <div className="profile-menu-item" onClick={() => { setOpen(false) }}>
+          <div className="profile-menu-item" onClick={() => { setOpen(false); if (onProfileClick) onProfileClick(); }}>
             <User size={14} /> My Profile
           </div>
           <div className="profile-menu-item logout" onClick={() => { setOpen(false); onLogout() }}>
