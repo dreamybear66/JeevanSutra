@@ -19,7 +19,7 @@ export default function Login({ onLogin }) {
     setError(null)
 
     try {
-      const res = await fetch('http://localhost:8080/login', {
+      const res = await fetch('http://localhost:8000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, role, pin }),
@@ -30,10 +30,10 @@ export default function Login({ onLogin }) {
       }
 
       const data = await res.json()
-      if (data.status === 'success') {
-        onLogin(data.user)
+      if (data.success) {
+        onLogin({ identifier, role, display_name: data.display_name })
       } else {
-        throw new Error(data.detail || 'Login failed')
+        throw new Error(data.message || 'Login failed')
       }
     } catch (err) {
       setError(err.message)
@@ -41,6 +41,7 @@ export default function Login({ onLogin }) {
       setLoading(false)
     }
   }
+
 
   return (
     <div className="login-container">
@@ -101,6 +102,7 @@ export default function Login({ onLogin }) {
             {loading ? 'Authenticating...' : 'Access Pipeline'} <ArrowRight size={16} />
           </button>
         </form>
+
 
         <div className="login-footer">
           <p>Secure Clinical Access Only</p>

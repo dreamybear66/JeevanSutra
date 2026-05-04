@@ -8,10 +8,21 @@ from datetime import date, datetime
 
 class PatientCreate(BaseModel):
     name: str
-    subject_id: Optional[str] = None
-    date_of_birth: Optional[date] = None
-    gender: Optional[str] = None
-    bed_number: Optional[str] = None
+    age: int
+    gender: str
+    blood_group: Optional[str] = None
+    phone: str
+    address: Optional[str] = None
+    admission_datetime: datetime
+    admitting_doctor: str
+    ward: str
+    bed_number: str
+    admission_type: str
+    admission_source: Optional[str] = None
+    primary_diagnosis: str
+    reason_for_admission: str
+    priority_level: str
+    medical_history: Optional[list] = None
     nfc_tag_id: Optional[str] = None
 
 class PatientUpdate(BaseModel):
