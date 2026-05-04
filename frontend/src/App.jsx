@@ -21,7 +21,7 @@ import CultureData from './components/CultureData'
 import StaffViews from './components/StaffViews'
 import html2pdf from 'html2pdf.js'
 
-const API_BASE = 'http://localhost:8080'
+const API_BASE = 'http://localhost:8000/api'
 
 const PATIENTS = [
   { id: 'patient_stable', name: 'John Doe (Stable)' },
@@ -72,10 +72,9 @@ function App() {
     if (!selectedScenario) return
     setLoading(true); setError(null)
     try {
-      const res = await fetch(`${API_BASE}/analyze`, {
+      const res = await fetch(`${API_BASE}/analyze/${selectedScenario}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenario: selectedScenario }),
       })
       if (!res.ok) throw new Error(`API error: ${res.status}`)
       setReport(await res.json())
