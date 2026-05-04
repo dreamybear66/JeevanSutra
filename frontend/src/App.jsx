@@ -126,7 +126,7 @@ function App() {
   if (!currentUser) {
     return <Login onLogin={(user) => {
       setCurrentUser(user)
-      setActiveNav(user.role === 'staff' ? 'ward-view' : 'overview')
+      setActiveNav(user.role === 'staff' ? 'patient-search' : 'overview')
     }} />
   }
 
@@ -143,15 +143,9 @@ function App() {
     { section: 'Patient Management' },
     { id:'patient-add', label:'Add Patient', Icon:UserPlus },
     { id:'patient-search', label:'Search Patient', Icon:Search },
-    { id:'patient-bed', label:'Bed Allocation', Icon:Bed },
-    { section: 'Ward' },
-    { id:'ward-view', label:'Bed / Ward View', Icon:LayoutDashboard },
-    { id:'vitals-entry', label:'Vitals Entry', Icon:Activity },
     { section: 'Data Ingestion' },
     { id:'upload-lab', label:'Upload Lab Reports', Icon:UploadCloud },
-    { id:'upload-culture', label:'Upload Culture Reports', Icon:UploadCloud },
     { section: 'Clinical' },
-    { id:'notes', label:'Notes & Observations', Icon:FileText },
     { id:'history', label:'Patient History', Icon:Clock },
     { id:'handover', label:'Shift Handover', Icon:Users },
     { section: 'Personal' },
@@ -273,10 +267,6 @@ function App() {
                 })}
               </nav>
             )}
-          </div>
-          <div className="sidebar-bottom">
-            <div className="sidebar-item"><BarChart3 size={18} /> <span className="sidebar-text">System Status</span></div>
-            <div className="sidebar-item"><Archive size={18} /> <span className="sidebar-text">Archive</span></div>
           </div>
         </aside>
 

@@ -53,3 +53,5 @@ uploads/
 
 # ── Gemini Cache ──
 .gemini/
+frontend/node_modules/
+

@@ -39,7 +39,7 @@ export default function Login({ onLogin }) {
       if (data.success || data.status === 'success') {
         onLogin(data.user || { role, id: identifier, name: data.display_name })
       } else {
-        throw new Error(data.detail || 'Login failed')
+        throw new Error(data.message || 'Login failed')
       }
     } catch (err) {
       setError(err.message)
@@ -47,6 +47,7 @@ export default function Login({ onLogin }) {
       setLoading(false)
     }
   }
+
 
   return (
     <div className="login-container">
@@ -107,6 +108,7 @@ export default function Login({ onLogin }) {
             {loading ? 'Authenticating...' : 'Access Pipeline'} <ArrowRight size={16} />
           </button>
         </form>
+
 
         <div className="login-footer">
           <p>Secure Clinical Access Only</p>
