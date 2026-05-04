@@ -1,0 +1,55 @@
+# ── Database Schema (private) ──
+schema_*.sql
+database_schema_v2.sql
+implementation_plan.md
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+.Python
+
+# ── Virtual Environment ──
+venv/
+env/
+.venv/
+ENV/
+
+# ── Environment Variables (SECRETS) ──
+.env
+*.env.local
+
+# ── ChromaDB Local Storage ──
+chroma_data/
+
+# ── IDE ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS Files ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Logs ──
+*.log
+
+# ── Testing ──
+.pytest_cache/
+htmlcov/
+.coverage
+
+# ── Uploads (local dev) ──
+uploads/
+
+# ── Gemini Cache ──
+.gemini/
