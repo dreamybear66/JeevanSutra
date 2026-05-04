@@ -65,7 +65,6 @@ export default function Login({ onLogin }) {
               <select value={role} onChange={e => setRole(e.target.value)}>
                 <option value="doctor">Doctor</option>
                 <option value="staff">Staff</option>
-                <option value="patient">Patient</option>
               </select>
             </div>
           </div>
