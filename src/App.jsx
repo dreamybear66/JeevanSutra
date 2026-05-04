@@ -14,6 +14,7 @@ import TimelineChart from './components/TimelineChart'
 import Narrative from './components/Narrative'
 import Login from './components/Login'
 import ProfileDropdown from './components/ProfileDropdown'
+import AdminDashboard from './components/AdminDashboard'
 
 const API_BASE = 'http://localhost:8080'
 
@@ -129,6 +130,7 @@ function App() {
                 { id:'vitals', label:'Vitals & Labs', Icon:Activity, allowed: ['doctor', 'staff'] },
                 { id:'rules', label:'Rule Engine', Icon:Settings, allowed: ['doctor', 'staff'] },
                 { id:'ai', label:'AI Insights', Icon:Brain, allowed: ['doctor'] },
+                { id:'admin', label:'Admin & Security', Icon:ShieldAlert, allowed: ['doctor'] },
               ].filter(item => item.allowed.includes(currentUser.role)).map(item => (
                 <div key={item.id} className={`sidebar-item ${activeNav === item.id ? 'active' : ''}`} onClick={() => setActiveNav(item.id)}>
                   <item.Icon size={15} /> {item.label}
@@ -156,13 +158,17 @@ function App() {
 
         {/* Main content */}
         <main className="main-area">
-          <div className="scenario-bar">
-            {SCENARIOS.map(s => (
-              <button key={s.id} className={`scenario-btn ${selectedScenario === s.id ? 'active' : ''}`}
-                onClick={() => { setSelectedScenario(s.id); setReport(null) }}>
-                <span className="dot" style={{ background: s.color }} /> {s.label}
-              </button>
-            ))}
+          {activeNav === 'admin' && currentUser.role === 'doctor' ? (
+            <AdminDashboard currentUser={currentUser} />
+          ) : (
+            <>
+              <div className="scenario-bar">
+                {SCENARIOS.map(s => (
+                  <button key={s.id} className={`scenario-btn ${selectedScenario === s.id ? 'active' : ''}`}
+                    onClick={() => { setSelectedScenario(s.id); setReport(null) }}>
+                    <span className="dot" style={{ background: s.color }} /> {s.label}
+                  </button>
+                ))}
             <button className="analyze-btn" onClick={runAnalysis} disabled={!selectedScenario || loading}>
               {loading ? 'Analyzing...' : 'Run Analysis'}
             </button>
@@ -214,6 +220,8 @@ function App() {
                 <ShieldAlert size={13} style={{ verticalAlign:'middle', marginRight:6 }} />
                 {report.safety_disclaimer}
               </div>
+            </>
+          )}
             </>
           )}
         </main>
