@@ -162,6 +162,25 @@ function App() {
   return (
     <>
       {showOpening && <OpeningAnimation onComplete={() => setShowOpening(false)} />}
+      
+      {showSettings && (
+        <div className="modal-overlay" onClick={() => setShowSettings(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>System Settings</h3>
+              <button onClick={() => setShowSettings(false)} className="close-btn">&times;</button>
+            </div>
+            <div className="modal-body">
+              <p>Settings panel is under construction. Future configuration options will be available here.</p>
+              <div className="settings-options">
+                <label><input type="checkbox" defaultChecked /> Enable Notifications</label>
+                <label><input type="checkbox" defaultChecked /> High Contrast Mode</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={`app-shell ${showOpening ? 'hidden-shell' : 'fade-in'}`}>
 
         {/* Toast notification */}
