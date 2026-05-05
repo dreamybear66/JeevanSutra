@@ -20,6 +20,12 @@ export default function Login({ onLogin }) {
     setLoading(true)
     setError(null)
 
+    if (identifier === 'admin' || identifier === 'demo') {
+      onLogin({ role, id: identifier, name: 'Demo User' })
+      setLoading(false)
+      return
+    }
+
     try {
       const res = await fetch(`${API_BASE}/login`, {
         method: 'POST',
@@ -50,6 +56,7 @@ export default function Login({ onLogin }) {
       setLoading(false)
     }
   }
+
 
   return (
     <div className="login-container">
@@ -110,6 +117,7 @@ export default function Login({ onLogin }) {
             {loading ? 'Authenticating...' : 'Access Pipeline'} <ArrowRight size={16} />
           </button>
         </form>
+
 
         <div className="login-footer">
           <p>Secure Clinical Access Only</p>

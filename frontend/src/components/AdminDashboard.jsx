@@ -17,7 +17,7 @@ export default function AdminDashboard({ currentUser }) {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch('http://localhost:8080/db/security-audit?limit=100')
+      const response = await fetch('http://localhost:8000/api/security-audit?limit=100')
       if (!response.ok) throw new Error('Failed to fetch audit logs')
       const data = await response.json()
       setAuditLogs(data.events || [])

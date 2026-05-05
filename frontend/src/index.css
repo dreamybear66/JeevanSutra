@@ -369,6 +369,49 @@ html, body, #root {
 }
 .login-button:hover { background-color: var(--blue-dark); transform: translateY(-1px); }
 
+.login-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 8px 0 4px;
+}
+.login-divider::before, .login-divider::after {
+  content: ''; flex: 1; height: 1px; background-color: var(--border-light);
+}
+.login-divider span {
+  font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+}
+.demo-buttons-row {
+  display: flex; gap: 12px;
+}
+.demo-login-button {
+  flex: 1; padding: 13px 10px;
+  color: #fff; border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem; font-weight: 700; cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: 'Outfit', sans-serif;
+}
+.demo-login-button.doctor {
+  background: linear-gradient(135deg, var(--blue-primary), #0ea5e9);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+}
+.demo-login-button.doctor:hover {
+  background: linear-gradient(135deg, var(--blue-dark), #0284c7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+}
+.demo-login-button.staff {
+  background: linear-gradient(135deg, var(--green-primary), #10b981);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+}
+.demo-login-button.staff:hover {
+  background: linear-gradient(135deg, var(--green-dark), #059669);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+}
+.login-error { color: var(--red-primary); font-size: 0.85rem; font-weight: 600; text-align: center; }
+.login-logo { margin-bottom: 16px; }
+
 /* Organ Bars */
 .organ-grid { display:flex; flex-direction: column; gap:10px; }
 .organ-bar { display:flex; align-items:center; gap:12px; }

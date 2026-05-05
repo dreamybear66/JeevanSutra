@@ -126,7 +126,7 @@ function App() {
   if (!currentUser) {
     return <Login onLogin={(user) => {
       setCurrentUser(user)
-      setActiveNav(user.role === 'staff' ? 'ward-view' : 'overview')
+      setActiveNav(user.role === 'staff' ? 'patient-search' : 'overview')
     }} />
   }
 
