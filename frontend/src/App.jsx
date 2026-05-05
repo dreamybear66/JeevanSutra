@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import './index.css'
 import {
-  ClipboardList, Activity, Settings, Brain, ArrowRight,
-  Cpu, MessageSquare, Sparkles, BarChart3, Archive,
-  Bell, Search, AlertTriangle, Lock, ShieldAlert, Layers,
+  ClipboardList, Activity, Settings, Brain,
+  Bell, Search, AlertTriangle, Lock, ShieldAlert,
   UserPlus, Bed, LayoutDashboard, UploadCloud, FileText, Clock, Users, User
 } from 'lucide-react'
 import ClinicalScores from './components/ClinicalScores'
@@ -19,17 +18,11 @@ import AdminDashboard from './components/AdminDashboard'
 import OpeningAnimation from './components/OpeningAnimation'
 import CultureData from './components/CultureData'
 import StaffViews from './components/StaffViews'
+import PatientUpload from './components/PatientUpload'
 import html2pdf from 'html2pdf.js'
 
 const API_BASE = 'http://localhost:8000/api'
 
-const PATIENTS = [
-  { id: 'patient_stable', name: 'John Doe (Stable)' },
-  { id: 'patient_sepsis', name: 'Jane Smith (Sepsis Protocol)' },
-  { id: 'patient_outlier_amr', name: 'Robert Johnson (Outlier/MRSA)' },
-]
-
-/* Custom SVG logo — heartbeat lifeline motif for JeevanSutra */
 function JeevanSutraLogo({ size = 24 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -48,25 +41,37 @@ function JeevanSutraLogo({ size = 24 }) {
 function App() {
   const [showOpening, setShowOpening] = useState(true)
   const [currentUser, setCurrentUser] = useState(null)
+  const [patients, setPatients] = useState([])
   const [selectedScenario, setSelectedScenario] = useState(null)
   const [report, setReport] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  
-  // Initialize nav correctly based on role later, default to overview or ward-view
   const [activeNav, setActiveNav] = useState(null)
+  const [notification, setNotification] = useState(null)
 
-  const [showSettings, setShowSettings] = useState(false)
+  const showNotif = (msg, type = 'success') => {
+    setNotification({ msg, type })
+    setTimeout(() => setNotification(null), 4000)
+  }
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setCurrentUser(null)
     setReport(null)
     setSelectedScenario(null)
-  }
+    setPatients([])
+  }, [])
 
-  const handleSettings = () => {
-    setShowSettings(true)
-  }
+  // Fetch patients when user logs in
+  useEffect(() => {
+    if (!currentUser) return
+    fetch(`${API_BASE}/patients`)
+      .then(res => res.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data : []
+        setPatients(list.map(p => ({ id: p.patient_id, name: `${p.name} (${p.bed_number || 'No Bed'})` })))
+      })
+      .catch(() => setPatients([]))
+  }, [currentUser])
 
   const runAnalysis = async () => {
     if (!selectedScenario) return
@@ -76,8 +81,9 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
-      if (!res.ok) throw new Error(`API error: ${res.status}`)
+      if (!res.ok) throw new Error(`Server error ${res.status}`)
       setReport(await res.json())
+      setActiveNav('overview')
     } catch (err) { setError(err.message) }
     finally { setLoading(false) }
   }
@@ -88,38 +94,32 @@ function App() {
 
   const handlePDFExport = () => {
     const element = document.getElementById('report-content')
-    if (!element) return
-    
-    const opt = {
-      margin:       0.5,
-      filename:     `Clinical_Summary_${report?.metadata?.patient_name || 'Patient'}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-    }
-    
-    html2pdf().set(opt).from(element).save()
+    if (!element) { showNotif('No report to export', 'error'); return }
+    html2pdf().set({
+      margin: 0.5,
+      filename: `Clinical_Summary_${report?.metadata?.patient_name || 'Patient'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    }).from(element).save()
+    showNotif('PDF export started')
   }
 
   const handleFHIRExport = async () => {
-    if (!report || !report.metadata || !report.metadata.patient_id) return
+    if (!report?.metadata?.patient_id) { showNotif('No report loaded', 'error'); return }
     try {
-      const response = await fetch(`${API_BASE}/reports/${report.metadata.patient_id}/export/fhir?actor_id=${currentUser.id}`)
-      if (!response.ok) throw new Error('FHIR export failed')
-      const data = await response.json()
-      
+      const res = await fetch(`${API_BASE}/reports/${report.metadata.patient_id}/export/fhir?actor_id=${currentUser.id}`)
+      if (!res.ok) throw new Error('Export failed')
+      const data = await res.json()
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
-      a.download = `FHIR_Bundle_${report.metadata.patient_id}.json`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      a.href = url; a.download = `FHIR_Bundle_${report.metadata.patient_id}.json`
+      document.body.appendChild(a); a.click()
+      document.body.removeChild(a); URL.revokeObjectURL(url)
+      showNotif('FHIR bundle downloaded')
     } catch (err) {
-      console.error(err)
-      alert('Failed to export FHIR data')
+      showNotif('FHIR export failed: ' + err.message, 'error')
     }
   }
 
@@ -130,26 +130,33 @@ function App() {
     }} />
   }
 
+  // ── Doctor sidebar (clean, clinical) ──
   const doctorNav = [
-    { id:'overview', label:'Patient Overview', Icon:ClipboardList },
-    { id:'vitals', label:'Vitals & Labs', Icon:Activity },
-    { id:'rules', label:'Rule Engine', Icon:Settings },
-    { id:'reports', label:'Reports / Culture', Icon:ClipboardList },
-    { id:'ai', label:'AI Insights', Icon:Brain },
-    { id:'admin', label:'Admin & Security', Icon:ShieldAlert },
+    { id: 'overview',  label: 'Patient Overview',   Icon: ClipboardList },
+    { id: 'vitals',    label: 'Vitals & Lab Trends', Icon: Activity },
+    { id: 'alerts',    label: 'Alerts & Flags',      Icon: AlertTriangle },
+    { id: 'culture',   label: 'Culture Results',     Icon: FileText },
+    { id: 'narrative', label: 'AI Clinical Summary', Icon: Brain },
   ]
 
+  // ── Staff sidebar ──
   const staffNav = [
     { section: 'Patient Management' },
-    { id:'patient-add', label:'Add Patient', Icon:UserPlus },
-    { id:'patient-search', label:'Search Patient', Icon:Search },
+    { id: 'patient-add',    label: 'Add Patient',          Icon: UserPlus },
+    { id: 'patient-search', label: 'Search Patient',       Icon: Search },
+    { id: 'patient-bed',    label: 'Bed Allocation',       Icon: Bed },
+    { section: 'Ward' },
+    { id: 'ward-view',      label: 'Bed / Ward View',      Icon: LayoutDashboard },
+    { id: 'vitals-entry',   label: 'Vitals Entry',         Icon: Activity },
     { section: 'Data Ingestion' },
-    { id:'upload-lab', label:'Upload Lab Reports', Icon:UploadCloud },
+    { id: 'upload-lab',     label: 'Upload Lab Reports',   Icon: UploadCloud },
+    { id: 'upload-culture', label: 'Upload Culture',       Icon: UploadCloud },
     { section: 'Clinical' },
-    { id:'history', label:'Patient History', Icon:Clock },
-    { id:'handover', label:'Shift Handover', Icon:Users },
+    { id: 'notes',          label: 'Notes & Observations', Icon: FileText },
+    { id: 'history',        label: 'Patient History',      Icon: Clock },
+    { id: 'handover',       label: 'Shift Handover',       Icon: Users },
     { section: 'Personal' },
-    { id:'staff-profile', label:'Staff Profile', Icon:User },
+    { id: 'staff-profile',  label: 'Staff Profile',        Icon: User },
   ]
 
   return (
@@ -175,198 +182,238 @@ function App() {
       )}
 
       <div className={`app-shell ${showOpening ? 'hidden-shell' : 'fade-in'}`}>
-      {/* Critical alert banner */}
-      {report && hasSepsis && (
-        <div className="alert-banner critical">
-          <AlertTriangle size={14} />
-          SEPSIS CRITERIA MET &mdash; IMMEDIATE ATTENTION REQUIRED
-        </div>
-      )}
 
-      {/* Header */}
-      <header className="app-header">
-        <div className="header-left">
-          <div className="header-brand">
-            <JeevanSutraLogo size={28} />
-            <span className="header-title">JeevanSutra</span>
+        {/* Toast notification */}
+        {notification && (
+          <div style={{
+            position: 'fixed', top: '16px', right: '20px', zIndex: 9000,
+            padding: '12px 20px', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem',
+            background: notification.type === 'error' ? '#fee2e2' : '#d1fae5',
+            color: notification.type === 'error' ? '#ef4444' : '#059669',
+            border: `1px solid ${notification.type === 'error' ? '#fca5a5' : '#6ee7b7'}`,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            animation: 'fadeIn 0.3s ease',
+          }}>
+            {notification.msg}
           </div>
-          {report && (
-            <div className="header-meta">
-              <div><div className="label">Patient ID</div><div className="value">{patientId.substring(0, 12)}</div></div>
-              <div><div className="label">Stability</div><div className={`value ${hasSepsis ? 'critical-text' : ''}`}>{hasSepsis ? 'CRITICAL' : 'STABLE'}</div></div>
+        )}
+
+        {/* Critical alert banner */}
+        {report && hasSepsis && (
+          <div className="alert-banner critical">
+            <AlertTriangle size={14} />
+            SEPSIS CRITERIA MET — IMMEDIATE ATTENTION REQUIRED
+          </div>
+        )}
+
+        {/* Header */}
+        <header className="app-header">
+          <div className="header-left">
+            <div className="header-brand">
+              <JeevanSutraLogo size={28} />
+              <span className="header-title">JeevanSutra</span>
             </div>
-          )}
-        </div>
-        <div className="header-search-wrap">
-          <Search size={14} className="search-icon" />
-          <input className="header-search" placeholder="Search patient parameters..." />
-        </div>
-        <div className="header-actions">
-          <div className="header-icon" title="Notifications"><Bell size={16} /></div>
-          <div className="header-icon" title="Settings" onClick={handleSettings}><Settings size={16} /></div>
-          <ProfileDropdown 
-            user={currentUser} 
-            onLogout={handleLogout} 
-            onProfileClick={() => setActiveNav(currentUser.role === 'staff' ? 'staff-profile' : 'admin')}
-          />
-        </div>
-      </header>
-
-      {/* Outlier lock banner */}
-      {report && hasOutlier && (
-        <div className="lock-banner"><Lock size={13} /> Outlier Detected &mdash; Diagnosis Locked</div>
-      )}
-
-      <div className="content-layout">
-        {/* Sidebar */}
-        <aside className="sidebar">
-          <div>
-            {currentUser.role === 'doctor' && (
-              <>
-                <div className="sidebar-section">
-                  <div className="sidebar-label">Clinical Pipeline</div>
-                  <div className="sidebar-sublabel">data synthesis active</div>
-                </div>
-                <nav className="sidebar-nav">
-                  {doctorNav.map(item => (
-                    <div key={item.id} className={`sidebar-item ${activeNav === item.id ? 'active' : ''}`} onClick={() => setActiveNav(item.id)}>
-                      <item.Icon size={18} /> <span className="sidebar-text">{item.label}</span>
-                    </div>
-                  ))}
-                </nav>
-                <div className="sidebar-divider" />
-                <div className="sidebar-section"><div className="sidebar-label" style={{color:'#64748b'}}>Pipeline Stages</div></div>
-                <nav className="sidebar-nav">
-                  {[
-                    { label:'Ingestion', Icon:ArrowRight },
-                    { label:'Rule Engines', Icon:Cpu },
-                    { label:'LLM Agents', Icon:MessageSquare },
-                    { label:'Synthesis', Icon:Sparkles },
-                  ].map((item, i) => (
-                    <div key={i} className="sidebar-item"><item.Icon size={18} /> <span className="sidebar-text">{item.label}</span></div>
-                  ))}
-                </nav>
-              </>
+            {report && (
+              <div className="header-meta">
+                <div><div className="label">Patient ID</div><div className="value">{patientId.substring(0, 8)}...</div></div>
+                <div><div className="label">Status</div><div className={`value ${hasSepsis ? 'critical-text' : ''}`}>{hasSepsis ? 'CRITICAL' : 'STABLE'}</div></div>
+              </div>
             )}
+          </div>
+          <div className="header-search-wrap">
+            <Search size={14} className="search-icon" />
+            <input className="header-search" placeholder="Search patient parameters..." />
+          </div>
+          <div className="header-actions">
+            <div className="header-icon" title="Notifications"><Bell size={16} /></div>
+            <ProfileDropdown
+              user={currentUser}
+              onLogout={handleLogout}
+              onProfileClick={() => setActiveNav(currentUser.role === 'staff' ? 'staff-profile' : 'admin')}
+            />
+          </div>
+        </header>
 
-            {currentUser.role === 'staff' && (
-              <nav className="sidebar-nav" style={{ marginTop: '10px' }}>
-                {staffNav.map((item, i) => {
-                  if (item.section) {
+        {/* Outlier lock banner */}
+        {report && hasOutlier && (
+          <div className="lock-banner"><Lock size={13} /> Outlier Detected — Diagnosis Locked for Review</div>
+        )}
+
+        <div className="content-layout">
+          {/* Sidebar */}
+          <aside className="sidebar">
+            <div>
+              {currentUser.role === 'doctor' && (
+                <>
+                  <div className="sidebar-section">
+                    <div className="sidebar-label">Clinical Workspace</div>
+                  </div>
+                  <nav className="sidebar-nav">
+                    {doctorNav.map(item => (
+                      <div
+                        key={item.id}
+                        className={`sidebar-item ${activeNav === item.id ? 'active' : ''}`}
+                        onClick={() => setActiveNav(item.id)}
+                      >
+                        <item.Icon size={15} /> {item.label}
+                      </div>
+                    ))}
+                  </nav>
+                </>
+              )}
+
+              {currentUser.role === 'staff' && (
+                <nav className="sidebar-nav" style={{ marginTop: '10px' }}>
+                  {staffNav.map((item, i) => {
+                    if (item.section) {
+                      return (
+                        <div key={i} className="sidebar-section" style={{ marginTop: i > 0 ? '18px' : '0', marginBottom: '6px' }}>
+                          <div className="sidebar-label">{item.section}</div>
+                        </div>
+                      )
+                    }
                     return (
-                      <div key={i} className="sidebar-section" style={{ marginTop: i > 0 ? '20px' : '0', marginBottom: '8px' }}>
-                        <div className="sidebar-label" style={{ marginTop: '12px' }}>{item.section}</div>
+                      <div
+                        key={item.id}
+                        className={`sidebar-item ${activeNav === item.id ? 'active' : ''}`}
+                        onClick={() => setActiveNav(item.id)}
+                      >
+                        <item.Icon size={15} /> {item.label}
                       </div>
                     )
-                  }
-                  return (
-                    <div key={item.id} className={`sidebar-item ${activeNav === item.id ? 'active' : ''}`} onClick={() => setActiveNav(item.id)}>
-                      <item.Icon size={18} /> <span className="sidebar-text">{item.label}</span>
-                    </div>
-                  )
-                })}
-              </nav>
-            )}
-          </div>
-        </aside>
-
-        {/* Main content */}
-        <main className="main-area">
-          {activeNav === 'admin' && currentUser.role === 'doctor' ? (
-            <AdminDashboard currentUser={currentUser} />
-          ) : currentUser.role === 'staff' ? (
-            <StaffViews activeNav={activeNav} />
-          ) : (
-            <>
-              <div className="glass-panel patient-selector-bar">
-                <span className="patient-selector-label">Patient Profile:</span>
-                <select 
-                  className="patient-select" 
-                  value={selectedScenario || ''} 
-                  onChange={(e) => { setSelectedScenario(e.target.value); setReport(null) }}
-                >
-                  <option value="" disabled>Select a patient...</option>
-                  {PATIENTS.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-                <button className="analyze-btn" onClick={runAnalysis} disabled={!selectedScenario || loading}>
-                  {loading ? 'Analyzing...' : 'Run Clinical Analysis'}
-                </button>
-              </div>
-
-          {error && <div className="error-bar">{error}</div>}
-          {loading && <div className="loading"><div className="spinner" />Running deterministic rule engines...</div>}
-
-          {!report && !loading && (
-            <div className="empty-state">
-              <Layers size={44} strokeWidth={1} style={{ color: '#94a3b8' }} />
-              <p>Select a patient scenario and run analysis</p>
-              <p className="subtext">Synthetic demo data for MVP</p>
+                  })}
+                </nav>
+              )}
             </div>
-          )}
+          </aside>
 
-          {report && (
-            <>
-              <div className="export-bar" style={{ display: 'flex', gap: '10px', marginBottom: '16px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                {currentUser.role === 'staff' && (
-                  <button className="analyze-btn" style={{ background: 'var(--green)', color: '#fff', marginRight: 'auto' }} onClick={() => alert('PDF Upload Dialog: Upload patient lab reports here for ingestion.')}>
-                    Upload Lab PDF
+          {/* Main content */}
+          <main className="main-area">
+
+            {/* ── ADMIN ── */}
+            {activeNav === 'admin' && currentUser.role === 'doctor' ? (
+              <AdminDashboard currentUser={currentUser} />
+
+            /* ── UPLOAD (doctor) ── */
+            ) : activeNav === 'upload' && currentUser.role === 'doctor' ? (
+              <PatientUpload patients={patients} currentUser={currentUser} />
+
+            /* ── STAFF VIEWS ── */
+            ) : currentUser.role === 'staff' ? (
+              <StaffViews activeNav={activeNav} />
+
+            /* ── DOCTOR CLINICAL VIEWS ── */
+            ) : (
+              <>
+                {/* Patient selector bar */}
+                <div className="patient-selector-bar">
+                  <span style={{ fontWeight: '700', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Patient:</span>
+                  <select
+                    className="patient-select"
+                    value={selectedScenario || ''}
+                    onChange={(e) => { setSelectedScenario(e.target.value); setReport(null) }}
+                  >
+                    <option value="" disabled>Select a patient…</option>
+                    {patients.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    className="analyze-btn"
+                    onClick={runAnalysis}
+                    disabled={!selectedScenario || loading}
+                  >
+                    {loading ? 'Analyzing…' : 'Run Analysis'}
                   </button>
-                )}
-                <button onClick={handlePDFExport} className="analyze-btn" style={{ background: 'rgba(255,255,255,0.8)', color: 'var(--text)', border: '1px solid var(--border)' }}>
-                  Download PDF
-                </button>
-                <button onClick={handleFHIRExport} className="analyze-btn">
-                  Export FHIR JSON
-                </button>
-              </div>
-              <div id="report-content">
-                <div className="dashboard-grid">
-                {activeNav === 'overview' && (
-                  <>
-                    <ClinicalScores data={report.clinical_scores_summary} />
-                    <VWRSCard data={report.vwrs_summary} />
-                    <div className="full-width"><RiskFlags flags={report.risk_flags} /></div>
-                    <div className="full-width"><Narrative data={report.ai_narrative} provenance={report.provenance_summary} /></div>
-                  </>
-                )}
-                
-                {activeNav === 'vitals' && (
-                  <>
-                    <TimelineChart timeline={report.disease_timeline} />
-                  </>
+                </div>
+
+                {error && <div className="error-bar">⚠ {error}</div>}
+                {loading && (
+                  <div className="loading">
+                    <div className="spinner" />
+                    Running clinical analysis…
+                  </div>
                 )}
 
-                {activeNav === 'rules' && (
-                  <>
-                    {report.amr_summary?.amr_detected ? <div className="full-width"><AMRAlerts data={report.amr_summary} /></div> : null}
-                    {report.outlier_alerts?.outliers_detected ? <div className="full-width"><OutlierAlerts data={report.outlier_alerts} /></div> : null}
-                  </>
+                {!report && !loading && (
+                  <div className="empty-state">
+                    <ClipboardList size={44} strokeWidth={1} style={{ color: '#94a3b8' }} />
+                    <p>Select a patient and run analysis to view clinical data</p>
+                    <p className="subtext">Or go to <strong>Upload Patient Data</strong> in the sidebar to import records</p>
+                  </div>
                 )}
 
-                {activeNav === 'reports' && (
-                  <div className="full-width"><CultureData /></div>
-                )}
-
-                {activeNav === 'ai' && currentUser.role === 'doctor' && (
+                {report && (
                   <>
-                    <div className="full-width"><Narrative data={report.ai_narrative} provenance={report.provenance_summary} /></div>
+                    {/* Export bar */}
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <button
+                        onClick={handlePDFExport}
+                        className="analyze-btn"
+                        style={{ background: '#fff', color: 'var(--text-main)', border: '1px solid var(--border-light)' }}
+                      >
+                        ⬇ Download PDF
+                      </button>
+                    </div>
+
+                    <div id="report-content">
+                      <div className="dashboard-grid">
+
+                        {/* Overview tab */}
+                        {activeNav === 'overview' && (
+                          <>
+                            <ClinicalScores data={report.clinical_scores_summary} />
+                            <VWRSCard data={report.vwrs_summary} />
+                            <div className="full-width"><RiskFlags flags={report.risk_flags} /></div>
+                          </>
+                        )}
+
+                        {/* Vitals & Labs tab */}
+                        {activeNav === 'vitals' && (
+                          <div className="full-width">
+                            <TimelineChart timeline={report.disease_timeline} />
+                          </div>
+                        )}
+
+                        {/* Alerts tab */}
+                        {activeNav === 'alerts' && (
+                          <>
+                            <div className="full-width"><RiskFlags flags={report.risk_flags} /></div>
+                            {report.outlier_alerts?.outliers_detected && (
+                              <div className="full-width"><OutlierAlerts data={report.outlier_alerts} /></div>
+                            )}
+                            {report.amr_summary?.amr_detected && (
+                              <div className="full-width"><AMRAlerts data={report.amr_summary} /></div>
+                            )}
+                          </>
+                        )}
+
+                        {/* Culture tab */}
+                        {activeNav === 'culture' && (
+                          <div className="full-width"><CultureData /></div>
+                        )}
+
+                        {/* AI Narrative tab */}
+                        {activeNav === 'narrative' && (
+                          <div className="full-width">
+                            <Narrative data={report.ai_narrative} provenance={report.provenance_summary} />
+                          </div>
+                        )}
+
+                      </div>
+
+                      <div className="safety-disclaimer">
+                        <ShieldAlert size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                        {report.safety_disclaimer}
+                      </div>
+                    </div>
                   </>
                 )}
-              </div>
-              <div className="safety-disclaimer">
-                <ShieldAlert size={13} style={{ verticalAlign:'middle', marginRight:6 }} />
-                {report.safety_disclaimer}
-              </div>
-              </div>
-            </>
-          )}
-            </>
-          )}
-        </main>
+              </>
+            )}
+          </main>
+        </div>
       </div>
-    </div>
     </>
   )
 }

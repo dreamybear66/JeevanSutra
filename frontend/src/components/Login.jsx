@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Lock, User, KeyRound, ArrowRight } from 'lucide-react'
 
+const API_BASE = 'http://localhost:8000/api'
+
 export default function Login({ onLogin }) {
   const [identifier, setIdentifier] = useState('')
   const [role, setRole] = useState('doctor')
@@ -25,19 +27,26 @@ export default function Login({ onLogin }) {
     }
 
     try {
-      const res = await fetch('http://localhost:8000/api/login', {
+      const res = await fetch(`${API_BASE}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, role, pin }),
       })
 
       if (!res.ok) {
-        throw new Error('Invalid credentials')
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.detail || 'Invalid credentials')
       }
 
       const data = await res.json()
-      if (data.success || data.status === 'success') {
-        onLogin(data.user || { role, id: identifier, name: data.display_name })
+      if (data.success) {
+        // Pass user object to App with id, role, display_name
+        onLogin({
+          id: identifier,
+          role: role,
+          name: data.display_name || identifier,
+          display_name: data.display_name || identifier,
+        })
       } else {
         throw new Error(data.message || 'Login failed')
       }
