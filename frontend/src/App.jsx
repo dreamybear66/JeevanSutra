@@ -48,6 +48,7 @@ function App() {
   const [error, setError] = useState(null)
   const [activeNav, setActiveNav] = useState(null)
   const [notification, setNotification] = useState(null)
+  const [showSettings, setShowSettings] = useState(false)
 
   const showNotif = (msg, type = 'success') => {
     setNotification({ msg, type })
