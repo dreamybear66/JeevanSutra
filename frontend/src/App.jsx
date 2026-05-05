@@ -13,6 +13,7 @@ import OutlierAlerts from './components/OutlierAlerts'
 import TimelineChart from './components/TimelineChart'
 import Narrative from './components/Narrative'
 import Login from './components/Login'
+import LandingPage from './components/LandingPage'
 import ProfileDropdown from './components/ProfileDropdown'
 import AdminDashboard from './components/AdminDashboard'
 import OpeningAnimation from './components/OpeningAnimation'
@@ -39,6 +40,7 @@ function JeevanSutraLogo({ size = 24 }) {
 }
 
 function App() {
+  const [showLanding, setShowLanding] = useState(true)
   const [showOpening, setShowOpening] = useState(true)
   const [currentUser, setCurrentUser] = useState(null)
   const [patients, setPatients] = useState([])
@@ -125,6 +127,14 @@ function App() {
   }
 
   if (!currentUser) {
+    if (showLanding) {
+      return (
+        <>
+          {showOpening && <OpeningAnimation onComplete={() => setShowOpening(false)} />}
+          {!showOpening && <LandingPage onNavigateLogin={() => setShowLanding(false)} />}
+        </>
+      )
+    }
     return <Login onLogin={(user) => {
       setCurrentUser(user)
       setActiveNav(user.role === 'staff' ? 'patient-search' : 'overview')
@@ -145,15 +155,9 @@ function App() {
     { section: 'Patient Management' },
     { id: 'patient-add',    label: 'Add Patient',          Icon: UserPlus },
     { id: 'patient-search', label: 'Search Patient',       Icon: Search },
-    { id: 'patient-bed',    label: 'Bed Allocation',       Icon: Bed },
-    { section: 'Ward' },
-    { id: 'ward-view',      label: 'Bed / Ward View',      Icon: LayoutDashboard },
-    { id: 'vitals-entry',   label: 'Vitals Entry',         Icon: Activity },
     { section: 'Data Ingestion' },
     { id: 'upload-lab',     label: 'Upload Lab Reports',   Icon: UploadCloud },
-    { id: 'upload-culture', label: 'Upload Culture',       Icon: UploadCloud },
     { section: 'Clinical' },
-    { id: 'notes',          label: 'Notes & Observations', Icon: FileText },
     { id: 'history',        label: 'Patient History',      Icon: Clock },
     { id: 'handover',       label: 'Shift Handover',       Icon: Users },
     { section: 'Personal' },
@@ -162,21 +166,12 @@ function App() {
 
   return (
     <>
-      {showOpening && <OpeningAnimation onComplete={() => setShowOpening(false)} />}
-      
-      {showSettings && (
-        <div className="modal-overlay" onClick={() => setShowSettings(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+      {/* Settings modal placeholder */}
+      {false && (
+        <div className="modal-overlay">
+          <div className="modal-content">
             <div className="modal-header">
               <h3>System Settings</h3>
-              <button onClick={() => setShowSettings(false)} className="close-btn">&times;</button>
-            </div>
-            <div className="modal-body">
-              <p>Settings panel is under construction. Future configuration options will be available here.</p>
-              <div className="settings-options">
-                <label><input type="checkbox" defaultChecked /> Enable Notifications</label>
-                <label><input type="checkbox" defaultChecked /> High Contrast Mode</label>
-              </div>
             </div>
           </div>
         </div>

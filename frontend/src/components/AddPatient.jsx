@@ -1,4 +1,7 @@
 import { useState } from 'react'
+
+const SUPABASE_URL = 'https://emrwxnshrcmnktotkadi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtcnd4bnNocmNtbmt0b3RrYWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MDg5MDYsImV4cCI6MjA5MzQ4NDkwNn0.kPf4Fem2pcdj2R-nb1o0jtuQ_GPgjLurUiKWnLia4-s';
 import {
   UserPlus, ChevronDown, ChevronUp, ClipboardList, Stethoscope,
   Check, AlertCircle, Plus, X, Save, RotateCcw
@@ -52,7 +55,6 @@ const initialForm = {
   admission_type: '',
   admission_source: '',
   primary_diagnosis: '',
-  reason_for_admission: '',
   priority_level: '',
 }
 
@@ -135,27 +137,50 @@ export default function AddPatient() {
     if (!form.bed_number) e.bed_number = 'Bed number is required'
     if (!form.admission_type) e.admission_type = 'Admission type is required'
     if (!form.primary_diagnosis.trim()) e.primary_diagnosis = 'Primary diagnosis is required'
-    if (!form.reason_for_admission.trim()) e.reason_for_admission = 'Reason for admission is required'
     if (!form.priority_level) e.priority_level = 'Priority level is required'
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
   /* ── Submit ── */
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) {
       // Open sections with errors
       const demoFields = ['name', 'age', 'gender', 'phone']
-      const admFields = ['admission_datetime', 'admitting_doctor', 'ward', 'bed_number', 'admission_type', 'primary_diagnosis', 'reason_for_admission', 'priority_level']
+      const admFields = ['admission_datetime', 'admitting_doctor', 'ward', 'bed_number', 'admission_type', 'primary_diagnosis', 'priority_level']
       const errs = Object.keys(errors)
       if (demoFields.some(f => errs.includes(f))) setOpenSections(prev => ({ ...prev, demographics: true }))
       if (admFields.some(f => errs.includes(f))) setOpenSections(prev => ({ ...prev, admission: true }))
       return
     }
 
-    // Demo mode: just show success
-    setSubmitted(true)
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/patients`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          name: form.name,
+          gender: form.gender === 'Male' ? 'M' : form.gender === 'Female' ? 'F' : 'O',
+          bed_number: form.bed_number,
+          status: 'admitted',
+          is_ventilated: false,
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to register patient in database');
+      }
+
+      setSubmitted(true)
+    } catch (err) {
+      alert(err.message);
+    }
   }
 
   const handleReset = () => {
@@ -378,18 +403,6 @@ export default function AddPatient() {
             </div>
             {errors.priority_level && <span className="form-error"><AlertCircle size={12} /> {errors.priority_level}</span>}
           </Field>
-
-          <div className="form-field full-span">
-            <Field label="Reason for ICU Admission" required error={errors.reason_for_admission}>
-              <textarea
-                placeholder="Describe the clinical reason for ICU admission..."
-                value={form.reason_for_admission}
-                onChange={e => set('reason_for_admission', e.target.value)}
-                className="form-input form-textarea"
-                rows={3}
-              />
-            </Field>
-          </div>
         </div>
       </FormSection>
 

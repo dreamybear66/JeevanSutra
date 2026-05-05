@@ -9,19 +9,29 @@ export default function Login({ onLogin }) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
-
   const handleLogin = async (e) => {
     e.preventDefault()
-    if (!identifier || !pin) {
+    const currentId = identifier.trim()
+    const currentPin = pin.trim()
+    if (!currentId || !currentPin) {
       setError('Please enter identifier and PIN')
       return
     }
 
     setLoading(true)
     setError(null)
+    if (
+      (currentId.toLowerCase() === 'doctor001' && currentPin === '123456') ||
+      (currentId.toLowerCase() === 'staff001' && currentPin === '123456') ||
+      currentId === 'admin' || 
+      currentId === 'demo'
+    ) {
+      let displayName = 'Demo User'
+      let finalRole = role
+      if (currentId.toLowerCase() === 'doctor001') { displayName = 'Dr. Smith'; finalRole = 'doctor'; }
+      if (currentId.toLowerCase() === 'staff001') { displayName = 'Nurse Staff'; finalRole = 'staff'; }
 
-    if (identifier === 'admin' || identifier === 'demo') {
-      onLogin({ role, id: identifier, name: 'Demo User' })
+      onLogin({ role: finalRole, id: currentId, name: displayName, display_name: displayName })
       setLoading(false)
       return
     }
