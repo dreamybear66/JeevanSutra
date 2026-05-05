@@ -57,3 +57,4 @@ uploads/
 # ── Node ──
 node_modules/
 .npm/
+frontend/node_modules/
