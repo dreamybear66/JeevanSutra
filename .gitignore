@@ -53,3 +53,7 @@ uploads/
 
 # ── Gemini Cache ──
 .gemini/
+
+# ── Node ──
+node_modules/
+.npm/
