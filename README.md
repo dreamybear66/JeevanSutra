@@ -1,4 +1,4 @@
-# Sanjeevani v2 — Backend
+# JeevanSutra
 
 **Hybrid Rule-Engine + AI Narrative ICU Diagnostic Risk Assistant**
 
